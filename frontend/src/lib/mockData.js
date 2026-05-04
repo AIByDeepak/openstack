@@ -240,3 +240,61 @@ export function clusterNumaCapacityReport() {
         free_ram_gb: h.ramTotalGb - h.ramUsedGb,
     }));
 }
+
+// All instances flattened from hosts — used by /instances and Masakari panel
+export const INSTANCES_ALL = HOSTS.flatMap((h) =>
+    h.vms.map((v) => ({
+        vm_uuid: v.uuid,
+        name: v.name,
+        flavor: v.flavor,
+        state: v.state,
+        host: h.hostname,
+        aggregate: h.aggregate,
+        vcpus: v.vcpus,
+        ram_gb: v.ram,
+        owner: v.owner,
+        created_at: "2026-02-01T12:34:56Z",
+        // 5% of instances marked as MIGRATING for Masakari demo
+        masakari: v.state === "ERROR" ? "recovering" : null,
+    }))
+);
+
+export const MIGRATION_HISTORY = [
+    { id: 1, ts: "2026-02-04 19:42", from: "cn-compute-007", to: "cn-compute-002", vm: "instance-09a2", pocket_gained: 4, status: "success", duration_ms: 2304 },
+    { id: 2, ts: "2026-02-04 18:11", from: "cn-edge-004", to: "cn-edge-001", vm: "instance-098e", pocket_gained: 2, status: "success", duration_ms: 1841 },
+    { id: 3, ts: "2026-02-04 16:55", from: "cn-gpu-003", to: "cn-gpu-001", vm: "instance-098a", pocket_gained: 8, status: "success", duration_ms: 4920 },
+    { id: 4, ts: "2026-02-04 15:30", from: "cn-default-013", to: "cn-default-005", vm: "instance-0982", pocket_gained: 0, status: "failed", duration_ms: 9120 },
+    { id: 5, ts: "2026-02-04 13:08", from: "cn-compute-016", to: "cn-compute-014", vm: "instance-0976", pocket_gained: 4, status: "success", duration_ms: 3001 },
+];
+
+export const PROMETHEUS_TEXT = `# HELP scheduler_placements_total Total placement decisions
+# TYPE scheduler_placements_total counter
+scheduler_placements_total 18429
+# HELP scheduler_placements_failed Total failed placements
+# TYPE scheduler_placements_failed counter
+scheduler_placements_failed 312
+# HELP scheduler_decision_ms Average placement decision time in ms
+# TYPE scheduler_decision_ms gauge
+scheduler_decision_ms 14.3
+# HELP scheduler_cache_hit_total Cache hits
+# TYPE scheduler_cache_hit_total counter
+scheduler_cache_hit_total 92481
+# HELP scheduler_cache_miss_rate Cache miss percentage
+# TYPE scheduler_cache_miss_rate gauge
+scheduler_cache_miss_rate 4.7
+# HELP scheduler_active_hosts Hosts currently active
+# TYPE scheduler_active_hosts gauge
+scheduler_active_hosts 9
+# HELP scheduler_degraded_hosts Hosts in degraded state
+# TYPE scheduler_degraded_hosts gauge
+scheduler_degraded_hosts 5
+# HELP scheduler_total_vcpus Cluster total vCPUs
+# TYPE scheduler_total_vcpus gauge
+scheduler_total_vcpus 1536
+# HELP scheduler_free_vcpus Free vCPUs across the cluster
+# TYPE scheduler_free_vcpus gauge
+scheduler_free_vcpus 449
+# HELP scheduler_migrations_total Live migrations executed
+# TYPE scheduler_migrations_total counter
+scheduler_migrations_total 2104
+`;

@@ -8,6 +8,11 @@ import Hosts from "@/pages/Hosts";
 import CpuConfig from "@/pages/CpuConfig";
 import Visibility from "@/pages/Visibility";
 import Pockets from "@/pages/Pockets";
+import Aggregator from "@/pages/Aggregator";
+import Placement from "@/pages/Placement";
+import Migration from "@/pages/Migration";
+import Instances from "@/pages/Instances";
+import Metrics from "@/pages/Metrics";
 import ComingSoon from "@/pages/ComingSoon";
 
 function App() {
@@ -20,11 +25,13 @@ function App() {
                             <Route path="/" element={<Overview />} />
                             <Route path="/hosts" element={<Hosts />} />
                             <Route path="/cpu-config" element={<CpuConfig />} />
-                            <Route path="/visibility" element={<Visibility />} />
                             <Route path="/pockets" element={<Pockets />} />
-                            <Route path="/aggregates" element={<ComingSoon slug="aggregates" />} />
-                            <Route path="/vm-placement" element={<ComingSoon slug="vm-placement" />} />
-                            <Route path="/migration" element={<ComingSoon slug="migration" />} />
+                            <Route path="/instances" element={<Instances />} />
+                            <Route path="/visibility" element={<Visibility />} />
+                            <Route path="/aggregator" element={<Aggregator />} />
+                            <Route path="/placement" element={<Placement />} />
+                            <Route path="/migration" element={<Migration />} />
+                            <Route path="/metrics" element={<Metrics />} />
                             <Route path="/settings" element={<ComingSoon slug="settings" />} />
                         </Routes>
                     </Layout>

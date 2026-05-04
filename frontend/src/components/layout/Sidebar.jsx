@@ -10,6 +10,9 @@ import {
     ArrowRightLeft,
     Settings,
     CircleDot,
+    Activity,
+    Gauge,
+    Container,
 } from "lucide-react";
 
 const GROUPS = [
@@ -19,23 +22,39 @@ const GROUPS = [
             { to: "/", label: "Overview", icon: LayoutDashboard },
             { to: "/hosts", label: "Hosts", icon: Server },
             { to: "/cpu-config", label: "CPU Config", icon: Cpu },
-            { to: "/visibility", label: "Flavor Visibility", icon: Eye },
             { to: "/pockets", label: "Pockets", icon: Boxes },
+            { to: "/instances", label: "Instances", icon: Container },
         ],
     },
     {
-        label: "Scheduler",
+        label: "v2.1",
+        items: [{ to: "/visibility", label: "Flavor Visibility", icon: Eye, live: "indigo" }],
+    },
+    {
+        label: "v2.2",
+        items: [{ to: "/aggregator", label: "Host Aggregator", icon: Layers3, live: "teal" }],
+    },
+    {
+        label: "v2.3",
         items: [
-            { to: "/vm-placement", label: "VM Placement", icon: Rocket, soon: true },
-            { to: "/aggregates", label: "Aggregates", icon: Layers3, soon: true },
-            { to: "/migration", label: "Migration", icon: ArrowRightLeft, soon: true },
+            { to: "/placement", label: "VM Placement", icon: Rocket, live: "coral" },
+            { to: "/migration", label: "Migration & Masakari", icon: ArrowRightLeft, live: "coral" },
         ],
     },
     {
         label: "System",
-        items: [{ to: "/settings", label: "Settings", icon: Settings, soon: true }],
+        items: [
+            { to: "/metrics", label: "Metrics", icon: Gauge },
+            { to: "/settings", label: "Settings", icon: Settings, soon: true },
+        ],
     },
 ];
+
+const LIVE_COLOR = {
+    indigo: "bg-accent/20 text-accent border-accent/30",
+    teal: "bg-teal/20 text-teal border-teal/30",
+    coral: "bg-danger/20 text-danger border-danger/30",
+};
 
 export default function Sidebar() {
     return (
@@ -56,15 +75,18 @@ export default function Sidebar() {
             <nav className="flex-1 py-3 px-2 overflow-y-auto">
                 {GROUPS.map((group) => (
                     <div key={group.label} className="mt-3 first:mt-1">
-                        <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/70">
+                        <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/70 flex items-center gap-2">
                             {group.label}
+                            {group.label.startsWith("v2") && (
+                                <span className="w-1 h-1 rounded-full bg-accent live-dot" />
+                            )}
                         </div>
-                        {group.items.map(({ to, label, icon: Icon, soon }) => (
+                        {group.items.map(({ to, label, icon: Icon, soon, live }) => (
                             <NavLink
                                 key={to}
                                 to={to}
                                 end={to === "/"}
-                                data-testid={`nav-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                                data-testid={`nav-${label.toLowerCase().replace(/\s+/g, "-").replace(/&/g, "and")}`}
                                 className={({ isActive }) =>
                                     [
                                         "group flex items-center gap-3 px-3 py-2 mx-1 my-0.5 rounded-md text-[13px] transition-colors",
@@ -77,6 +99,11 @@ export default function Sidebar() {
                             >
                                 <Icon className="w-4 h-4" />
                                 <span className="flex-1">{label}</span>
+                                {live && (
+                                    <span className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border font-mono ${LIVE_COLOR[live]}`}>
+                                        live
+                                    </span>
+                                )}
                                 {soon && (
                                     <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-card-elev text-muted-foreground border border-border">
                                         Soon
@@ -90,7 +117,7 @@ export default function Sidebar() {
 
             <div className="px-4 py-4 border-t border-border text-[11px] text-muted-foreground font-mono">
                 <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success live-dot" />
+                    <Activity className="w-3 h-3 text-success" />
                     <span>scheduler online</span>
                 </div>
                 <div className="mt-1 opacity-70">build 2026.02 · region eu-west-1</div>
