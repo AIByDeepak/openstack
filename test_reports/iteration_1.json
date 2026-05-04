@@ -1,0 +1,46 @@
+{
+  "summary": "Comprehensive frontend-only UI test of Smart Scheduler Dashboard (mock-data). Verified TopBar, Sidebar, Overview, Hosts (with drawer tabs), CPU Config, Flavor Visibility (incl. heatmap), Pockets (carousel), and 4 Coming-Soon pages. 53/58 interactive testid checks passed. All 5 main pages render, all 4 coming-soon pages render, routing works, toasts/charts functional.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ComingSoon",
+        "issue": "Spec requires data-testid='waitlist-openstack-dash' on the waitlist CTA button across all 4 coming-soon pages, but implementation uses slug-based testid 'waitlist-{slug}' (e.g. waitlist-aggregates, waitlist-vm-placement, waitlist-migration, waitlist-settings). The button itself works fine — only the testid name deviates from spec.",
+        "selector": "[data-testid='waitlist-openstack-dash']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Recharts containers",
+        "issues": [
+          "Recharts logs ~10 console warnings: 'width(-1) and height(-1) of chart should be greater than 0' on initial mount (ResponsiveContainer before parent is sized). Non-blocking, charts render correctly once sized. Consider adding minHeight/minWidth to ResponsiveContainer parents to silence."
+        ]
+      }
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_1.json"],
+  "action_items": [
+    "OPTIONAL: Either (a) add a secondary data-testid='waitlist-openstack-dash' to the ComingSoon CTA so it satisfies both the review spec and current slug-based id, or (b) clarify whether slug-based ids are acceptable (current approach is more granular and useful for tests).",
+    "OPTIONAL: Silence Recharts width/height -1 warnings by giving ResponsiveContainer parents an explicit minHeight on first render."
+  ],
+  "critical_code_review_comments": [
+    "Good: all interactive elements have data-testid attributes.",
+    "Good: state management via DashboardContext with auto-refresh tick works as designed.",
+    "Good: mock API in /app/frontend/src/lib/api.js adheres to shapes of real API and returns realistic data.",
+    "Minor: TopBar manual-refresh spinning state uses setTimeout(700ms) — this works but could be tied to actual data load rather than a fixed timer.",
+    "Minor: mockData.js seed-random-based hosts are deterministic across reloads (good for testing) but sparkline and health pings use Math.random() which breaks determinism; acceptable for UI but flag if deterministic snapshots are ever needed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~91% (53/58 checks)"},
+  "seed_data_creation": "None required — app uses hardcoded mockData.js.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Frontend-only app at https://openstack-dash.preview.emergentagent.com. All 9 routes render without errors. Observations: (1) spec listed waitlist-openstack-dash testid but code uses waitlist-{slug}; all 4 coming-soon pages were verified with slug-based id and work. (2) Recharts console warnings are expected on mount and non-blocking. (3) Host drawer opens on row click and all 3 tabs (summary/vms/cpu) visible. (4) Pockets carousel has 5 dots (pocket-dot-0..4), prev/next navigation works. (5) Visibility heatmap renders on view toggle. (6) Quick placement check works with m1.large and other flavors. (7) Health dots, auto-refresh toggle, manual-refresh all functional.",
+  "test_credentials": "N/A (no auth)",
+  "rca of the issue": "No blocking issues. Only a spec deviation on one testid name which is cosmetic."
+}

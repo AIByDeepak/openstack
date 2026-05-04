@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --bg: 228 23% 8%;
+    --bg-elev: 230 22% 12%;
+    --sidebar: 229 19% 13%;
+    --card: 230 22% 15%;
+    --card-elev: 229 21% 18%;
+    --border: 230 18% 22%;
+    --border-strong: 232 16% 28%;
+    --foreground: 230 25% 96%;
+    --muted: 230 14% 65%;
+    --muted-strong: 230 10% 50%;
+    --accent: 239 84% 67%;
+    --accent-soft: 239 84% 67%;
+    --success: 152 60% 47%;
+    --warning: 38 92% 56%;
+    --danger: 0 75% 60%;
+    --info: 199 89% 60%;
+    --teal: 174 72% 48%;
+
+    --background: var(--bg);
+    --card-foreground: var(--foreground);
+    --popover: var(--card);
+    --popover-foreground: var(--foreground);
+    --primary: var(--foreground);
+    --primary-foreground: 230 25% 8%;
+    --secondary: var(--card-elev);
+    --secondary-foreground: var(--foreground);
+    --accent-foreground: 0 0% 100%;
+    --destructive: var(--danger);
+    --destructive-foreground: 0 0% 100%;
+    --input: var(--border);
+    --ring: var(--accent);
+    --radius: 0.5rem;
+
+    --chart-1: var(--accent);
+    --chart-2: var(--teal);
+    --chart-3: var(--success);
+    --chart-4: var(--warning);
+    --chart-5: var(--danger);
+}
+
+* {
+    border-color: hsl(var(--border));
+}
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background-color: hsl(var(--bg));
+    color: hsl(var(--foreground));
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01" on, "cv02" on;
+}
+
+code,
+.font-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+::selection {
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--foreground));
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: hsl(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-strong));
+}
+
+/* Grid background pattern for hero areas */
+.grid-pattern {
+    background-image:
+        linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 32px 32px;
+}
+
+/* Subtle animated pulse used on live indicators */
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+.live-dot {
+    animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        hsl(var(--card)) 0%,
+        hsl(var(--card-elev)) 50%,
+        hsl(var(--card)) 100%
+    );
+    background-size: 800px 100%;
+    animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+    animation: fade-up 0.4s ease-out both;
+}
+
+/* Recharts dark tweaks */
+.recharts-cartesian-axis-tick text {
+    fill: hsl(var(--muted));
+    font-size: 11px;
+}
+.recharts-tooltip-wrapper:focus { outline: none; }
