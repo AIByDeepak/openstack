@@ -21,6 +21,11 @@ const META = {
         description: "Tune the scheduler to your environment — refresh cadence, agent thresholds, retention windows, and theme.",
         features: ["Auto-refresh interval (5-300s)", "Agent unreachable threshold", "Activity log retention", "Notification webhooks"],
     },
+    "not-found": {
+        title: "Page not found",
+        description: "The route you requested isn't available. It may have moved or never existed.",
+        features: ["Use the sidebar to jump to an active page", "Migration & Masakari is intentionally not included — Masakari is not exposed by the backend"],
+    },
 };
 
 export default function ComingSoon({ slug }) {

@@ -1,48 +1,45 @@
-# Smart Scheduler Dashboard — PRD
+# Smart Scheduler v2.0 Dashboard — PRD
 
 ## Original problem statement
-Production-quality OpenStack NUMA-aware VM placement dashboard ("Smart Scheduler v2.0") with 5 fully-built pages (Overview, Hosts, CPU Config, Flavor Visibility, Pockets) and 4 coming-soon pages (VM Placement, Aggregates, Migration, Settings). Strict dark theme (#0f1117 / #1e2130 / #1a1d27 / #6366f1). Mock data shaped exactly like the real API at `http://10.232.80.241:31597`.
+Production-quality OpenStack NUMA-aware VM placement dashboard ("Smart Scheduler v2.0"). Live-first wiring to `http://10.232.80.241:31597` with mock fallback (mixed-content blocked from the preview environment, so MOCK DATA badge is visible). React + JSX (no TS), strict dark theme (#0f1117 / #1e2130 / #1a1d27 / #6366f1).
 
 ## Architecture
-- React 19 + React Router v7 + CRACO + Tailwind + shadcn/ui (no backend, no MongoDB)
-- Frontend-only with hardcoded fixtures in `src/lib/mockData.js`
-- Mock fetcher layer in `src/lib/api.js` with simulated 60–420ms latency
-- DashboardContext provides auto-refresh tick + version + env + manual-refresh callback
-- Recharts for sparklines, area charts, bar charts, pie chart
-- Sonner for toasts; tooltips via Radix
-- IBM Plex Sans (body) + JetBrains Mono (code/values)
+- React 19 + React Router v7 + Tailwind + shadcn/ui
+- Zustand UI store for `isMockMode` + endpoint error tracking
+- `@tanstack/react-virtual` for 1000+ row tables (Visibility, Instances)
+- `useAutoFetch` hook (default 600 s, 60 s health, 15 s metrics)
+- All fetchers wrapped: `apiFetch(path, mockFn) → { data, isMock }`
+- `SKIP_LIVE` short-circuit when site is HTTPS but API_BASE is HTTP
 
-## User personas
-- **Cluster operator** — needs at-a-glance health, free capacity, agent status
-- **Capacity planner** — needs flavor visibility, NUMA pocket breakdown
-- **On-call SRE** — needs activity log, placement-check tool, drilldown into hosts
+## Sidebar nav (3 groups)
+- **Monitoring** — Overview, Hosts, CPU Config, Pockets, Instances
+- **Scheduler** — Flavor Visibility, Host Aggregator, VM Placement
+- **System** — Metrics, Settings (Coming Soon)
 
-## Core (static) requirements
-- Dark theme strict to spec colors
-- Sidebar 240px with grouped nav (Monitoring/Scheduler/System) + COMING SOON badges
-- Top bar: version badge, env badge (amber), 3 health dots (`/health` `/healthz` `/readyz`), search, auto-refresh switch (30s default ON), manual-refresh button with spin animation
-- All shipped pages have loading skeletons, error retry banners, empty states, sonner toasts on refresh
+(Migration & Masakari intentionally removed — not in the backend per the API map.)
 
-## Implemented (2026-02-04)
-- **Overview** — 4 KPI cards w/ sparklines + trend %, /info system info card, /metrics panel (5 counters + 2 area charts), color-coded vCPU bar chart, Quick Placement Check tool, 10-event activity log
-- **Hosts** — left filters panel (status checkboxes, dedicated/free vCPU dual sliders), search, sortable columns, row checkboxes + bulk-select, agent-status dot per row, pagination (20/page), inline View/SSH/Reboot, slide-out drawer with Summary / VMs / CPU Config tabs
-- **CPU Config** — per-host expandable cards with dedicated/shared progress bar, 20×20 visual CPU grid (blue dedicated / teal shared), CPU pill tags, raw cpuset strings
-- **Flavor Visibility** — flavor select, summary KPIs, can/cannot filter toggle, 55/45 split with chart left and table/heatmap right (heatmap: 40×40 squares colored by can_place)
-- **Pockets** — animated carousel with NUMA bar chart + category pie per slide, prev/next, dot indicators, auto-advance every 8s
-- **Aggregates / VM Placement / Migration / Settings** — coming-soon pages with blurred mockup + feature list + waitlist CTA
-- **API mock layer** — covers /info, /metrics, /health, /healthz, /readyz, /hosts (+ aggregate filter), /hosts/list, /hosts/agent-status, /hosts/numa-topology, /hosts/{h}/vms, /hosts/cpu-config, /hosts/cpu-pins, /hosts/cluster/flavor-visibility, /pockets, /flavors, /flavors/{f}/placement, /hosts/placement-check, /hosts/best-host, /hosts/cluster-numa-capacity-report, /instances/{u}/placement-trace
-- **Health pings** randomly flip one dot amber every 7th cycle then recover, per spec
-
-## Backlog
-- **P1**: Live API proxy (FastAPI + httpx) to call `http://10.232.80.241:31597` server-side once that IP is reachable; cache layer for `/hosts/cpu-pins` and `/hosts/visibility`
-- **P1**: Build out VM Placement page (drag-and-drop placement workbench + what-if simulator)
-- **P2**: Build Aggregates page (member host management, metadata KV editor, flavor→aggregate mapping)
-- **P2**: Build Migration page (live VM migration tracker, NUMA-aware destination selector)
-- **P2**: Real Settings page (refresh interval slider, agent thresholds, theme variants, webhook notifications)
-- **P2**: CSV export endpoints (`/hosts/visibility/csv`)
-- **P3**: WebSocket subscription for activity log push instead of 30s poll
-- **P3**: Persistent saved searches/filters per user
-- **P3**: Add minHeight to ResponsiveContainer parents to silence Recharts mount warnings
+## Implemented (2026-02-04 → 2026-02-05)
+- TopBar with `/info`-driven version + env badge, `kcs_connected` green dot, **MOCK DATA** badge, 3 health dots polling every 60 s, auto-refresh switch (10 min), manual refresh with spin, 'Updated X ago' stale label (amber after 10 min)
+- **Overview** — 4 KPI cards w/ sparklines, /info system info card, /metrics scheduler counters + 2 area charts, color-coded vCPU horizontal bar chart, Quick Placement Check tool, 10-event activity log
+- **Hosts** — left filters (status / dedicated / free vCPU sliders), search, sortable cols, agent dot, pagination, slide-out drawer with **4 tabs (Summary / VMs / CPU Config / Capacity)** — Capacity tab calls `/hosts/vm-capacity/{h}` and shows `can_place` + eligible NUMA + free-after counts
+- **CPU Config** — per-host expandable cards, dedicated/shared bar, 20×20 visual CPU grid, CPU pills, raw cpuset strings, copy buttons
+- **Pockets** — animated carousel with NUMA bar chart + category pie, prev/next, dot indicators, auto-advance every 8 s
+- **Instances** — virtualised table (100+ rows), search debounced, row click opens drawer with `/instances/{uuid}/placement-trace` timeline, copy UUID
+- **Flavor Visibility** — flavor + aggregate selects, search, CSV export, Table / Heatmap / Chart toggle, virtualised table, responsive heatmap with S/M/L size toggle, side panel
+- **Host Aggregator** — split panel: aggregate cards left, detail right with hosts table (top-5 starred), multi-flavor comparison (up to 4), Detail/Matrix view toggle (matrix = flavors × aggregates with color-coded cells)
+- **VM Placement** — 3-step wizard: Step 1 best-host finder with score/derived flavor/alternatives → Step 2 NUMA pin preview + 5 constraint checks → Step 3 success card with placement trace timeline; recent placements table at bottom
+- **Metrics** — 6 KPI cards parsed from raw Prometheus text, area + line charts, raw text panel with copy
+- **Settings / 404** — Coming-soon pages with blurred mockup
+- **API mock layer** — every endpoint from the API map (30+ routes) shaped exactly like the real responses (e.g. `pcpu.{free,used,total}`, `numa_nodes[].{node_id,free_cpu_ids,...}`, `placeable_host_count`)
 
 ## Test status
-- Iteration 1: 53/58 frontend checks passed (~91%); 0 blocking issues; 2 optional LOW notes (slug-based waitlist testid; non-blocking Recharts mount warnings)
+- Iteration 1: 53/58 (~91 %) on initial dashboard
+- Iteration 2: 14/14 (100 %) on full v2.x build with Capacity tab + sidebar regroup + Masakari removal
+
+## Backlog (P1+)
+- **P1**: When `10.232.80.241:31597` is reachable from the host, the live data switches automatically — no code change. SKIP_LIVE only triggers in the HTTPS-preview env.
+- **P1**: Build out a real Settings page (refresh-interval slider, agent thresholds, webhook notifications)
+- **P2**: WebSocket subscription for activity log instead of 30 s poll
+- **P2**: Saved searches / per-user filters
+- **P3**: Silence Recharts width/height mount warnings via explicit minWidth on ResponsiveContainer parents
+- **P3**: Tie manual-refresh spinner to actual refetch completion instead of fixed 700 ms

@@ -31,6 +31,7 @@ function App() {
                             <Route path="/placement" element={<Placement />} />
                             <Route path="/metrics" element={<Metrics />} />
                             <Route path="/settings" element={<ComingSoon slug="settings" />} />
+                            <Route path="*" element={<ComingSoon slug="not-found" />} />
                         </Routes>
                     </Layout>
                 </BrowserRouter>
