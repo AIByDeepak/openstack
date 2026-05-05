@@ -19,7 +19,7 @@ export function DashboardProvider({ children }) {
         const id = setInterval(() => {
             setTick((t) => t + 1);
             setLastRefresh(new Date());
-        }, 30000);
+        }, 600000);
         return () => clearInterval(id);
     }, [autoRefresh]);
 

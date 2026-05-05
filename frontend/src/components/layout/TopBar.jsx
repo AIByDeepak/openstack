@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RefreshCw, Search, Bell, Database } from "lucide-react";
-import { getHealth, getHealthz, getReadyz } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const COLOR = {
     ok: "bg-success",
@@ -33,32 +33,39 @@ export default function TopBar() {
     const { autoRefresh, setAutoRefresh, refresh, lastRefresh, version, env } = useDashboard();
     const isMockMode = useUiStore((s) => s.isMockMode);
     const [health, setHealth] = useState({ health: "ok", healthz: "ok", readyz: "ok" });
+    const [info, setInfo] = useState(null);
     const [spinning, setSpinning] = useState(false);
+    const minutesAgo = Math.floor((Date.now() - lastRefresh.getTime()) / 60000);
     const secondsAgo = Math.floor((Date.now() - lastRefresh.getTime()) / 1000);
     const [, setNow] = useState(0);
     useEffect(() => {
         const id = setInterval(() => setNow((n) => n + 1), 5000);
         return () => clearInterval(id);
     }, []);
-    const staleColor = secondsAgo > 120 ? "text-danger" : secondsAgo > 60 ? "text-warning" : "text-muted-foreground";
+    const staleColor = minutesAgo > 10 ? "text-warning" : "text-muted-foreground";
+    const staleLabel = secondsAgo < 60 ? `${secondsAgo}s ago` : minutesAgo < 60 ? `${minutesAgo} min ago` : `${Math.floor(minutesAgo / 60)}h ago`;
+
+    useEffect(() => {
+        api.getInfo().then((r) => setInfo(r.data));
+    }, []);
 
     useEffect(() => {
         let mounted = true;
         const ping = async () => {
             try {
-                const [h, hz, rz] = await Promise.all([getHealth(), getHealthz(), getReadyz()]);
+                const [h, hz, rz] = await Promise.all([api.getHealth(), api.getHealthz(), api.getReadyz()]);
                 if (!mounted) return;
                 setHealth({
-                    health: h.status === "ok" ? "ok" : "degraded",
-                    healthz: hz.status === "ok" ? "ok" : "degraded",
-                    readyz: rz.status === "ok" ? "ok" : "degraded",
+                    health: h.data.status === "ok" ? "ok" : "degraded",
+                    healthz: hz.data.status === "ok" ? "ok" : "degraded",
+                    readyz: rz.data.status === "ok" ? "ok" : "degraded",
                 });
             } catch {
                 if (mounted) setHealth({ health: "down", healthz: "down", readyz: "down" });
             }
         };
         ping();
-        const id = setInterval(ping, 30_000);
+        const id = setInterval(ping, 60_000); // 60s per spec
         return () => { mounted = false; clearInterval(id); };
     }, []);
 
@@ -81,11 +88,17 @@ export default function TopBar() {
 
                 <div className="hidden md:flex items-center gap-2">
                     <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-border text-muted-foreground" data-testid="version-badge">
-                        {version}
+                        {info?.version || version}
                     </span>
                     <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-warning/15 text-warning border border-warning/30" data-testid="env-badge">
-                        {env}
+                        {info?.environment || env}
                     </span>
+                    {info?.kcs_connected !== undefined && (
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${info.kcs_connected ? "text-success border-success/30 bg-success/10" : "text-danger border-danger/30 bg-danger/10"}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${info.kcs_connected ? "bg-success" : "bg-danger"}`} />
+                            kcs
+                        </span>
+                    )}
                     {isMockMode && (
                         <span data-testid="mock-mode-badge" className="text-[10px] font-mono px-2 py-0.5 rounded bg-warning/20 text-warning border border-warning/40 inline-flex items-center gap-1">
                             <Database className="w-2.5 h-2.5" /> MOCK DATA
@@ -116,7 +129,7 @@ export default function TopBar() {
                             onCheckedChange={setAutoRefresh}
                         />
                         <span className={`font-mono text-[11px] ${staleColor}`} data-testid="stale-badge">
-                            {secondsAgo < 5 ? "just now" : `${secondsAgo}s ago`}
+                            Updated {staleLabel}
                         </span>
                     </div>
 

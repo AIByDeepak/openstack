@@ -1,8 +1,11 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import StatusBadge from "./StatusBadge";
-import { Cpu, Server, MemoryStick, Clock, Layers } from "lucide-react";
+import { Cpu, Server, MemoryStick, Clock, Layers, Calculator, CheckCircle2, XCircle } from "lucide-react";
+import { useState } from "react";
+import { api } from "@/lib/api";
 
 function MetaItem({ label, value, icon: Icon }) {
     return (
@@ -31,9 +34,23 @@ function CpuGrid({ host }) {
 }
 
 export default function HostDrawer({ host, open, onOpenChange }) {
+    const [capV, setCapV] = useState(4);
+    const [capR, setCapR] = useState(8);
+    const [capRes, setCapRes] = useState(null);
+    const [capLoading, setCapLoading] = useState(false);
     if (!host) return null;
     const ramPct = Math.round((host.ramUsedGb / host.ramTotalGb) * 100);
     const cpuPct = Math.round(((host.usedDedicated + host.usedShared) / host.totalCpus) * 100);
+
+    const checkCapacity = async () => {
+        setCapLoading(true);
+        try {
+            const r = await api.getVMCapacity(host.hostname, capV, capR);
+            setCapRes(r.data);
+        } finally {
+            setCapLoading(false);
+        }
+    };
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -60,6 +77,7 @@ export default function HostDrawer({ host, open, onOpenChange }) {
                         <TabsTrigger data-testid="tab-summary" value="summary">Summary</TabsTrigger>
                         <TabsTrigger data-testid="tab-vms" value="vms">VMs ({host.vms.length})</TabsTrigger>
                         <TabsTrigger data-testid="tab-cpu" value="cpu">CPU Config</TabsTrigger>
+                        <TabsTrigger data-testid="tab-capacity" value="capacity">Capacity</TabsTrigger>
                     </TabsList>
 
                     <ScrollArea className="flex-1">
@@ -165,6 +183,40 @@ export default function HostDrawer({ host, open, onOpenChange }) {
                                     </code>
                                 </div>
                             </div>
+                        </TabsContent>
+
+                        <TabsContent value="capacity" className="px-6 py-5 space-y-4">
+                            <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                <Calculator className="w-3 h-3" /> capacity check
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">vCPUs</label>
+                                    <input type="number" value={capV} onChange={(e) => setCapV(+e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md bg-card-elev border border-border text-[13px] font-mono outline-none focus:border-accent" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">RAM (GB)</label>
+                                    <input type="number" value={capR} onChange={(e) => setCapR(+e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md bg-card-elev border border-border text-[13px] font-mono outline-none focus:border-accent" />
+                                </div>
+                            </div>
+                            <Button data-testid="check-capacity-btn" disabled={capLoading} onClick={checkCapacity} className="w-full bg-accent hover:bg-accent/90 text-white">
+                                {capLoading ? "Checking..." : "Check Capacity"}
+                            </Button>
+                            {capRes && (
+                                <div className={`rounded-md border p-4 space-y-2 text-[12px] font-mono ${capRes.can_place ? "border-success/40 bg-success/5" : "border-danger/40 bg-danger/5"}`}>
+                                    <div className="flex items-center gap-2 text-base">
+                                        {capRes.can_place ? <CheckCircle2 className="w-5 h-5 text-success" /> : <XCircle className="w-5 h-5 text-danger" />}
+                                        <span className={capRes.can_place ? "text-success" : "text-danger"}>{capRes.can_place ? "Can place" : "Cannot place"}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div><span className="text-muted-foreground">eligible numa</span> <span className="text-foreground">{(capRes.eligible_numa_nodes || []).join(",") || "—"}</span></div>
+                                        <div><span className="text-muted-foreground">best node</span> <span className="text-foreground">{capRes.best_numa_node ?? "—"}</span></div>
+                                        <div><span className="text-muted-foreground">cpu after</span> <span className="text-foreground">{capRes.free_cpus_after ?? "—"}</span></div>
+                                        <div><span className="text-muted-foreground">ram after</span> <span className="text-foreground">{Math.round((capRes.free_memory_mb_after ?? 0) / 1024)} GB</span></div>
+                                    </div>
+                                    <div className="text-muted-foreground text-[11px] pt-2 border-t border-border">{capRes.reason}</div>
+                                </div>
+                            )}
                         </TabsContent>
                     </ScrollArea>
                 </Tabs>
